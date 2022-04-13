@@ -9,7 +9,7 @@ const flash = require('express-flash')
 const session = require('express-session')
 const methodOverride = require('method-override')
 const http = require('http');
-const tools = require('./tools/run.js')
+const tools = require('./tools/tools.js')
 
 
 const start_path = process.env.START_PATH_SOCKET
@@ -106,5 +106,5 @@ function checkNotAuthenticated(req, res, next) {
     return next()
 }
 
-tools.setupIO(server)
+tools.setupSocketIO(server)
 tools.runServer(server)
