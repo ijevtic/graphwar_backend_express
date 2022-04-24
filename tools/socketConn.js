@@ -32,7 +32,7 @@ function setupSocketIO (server) {
         });
 
         socket.on('leave room', (token) => {
-            removeFromWaitingRoom(io, socket.id);
+            removeFromWaitingRoom(socket.id);
         });
 
         socket.on('leave game', (token) => {

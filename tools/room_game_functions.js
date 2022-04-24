@@ -48,9 +48,11 @@ function emptyWaitingRoom(io) {
 function removeFromWaitingRoom(p) {
     while(lock) ;
     lock = true;
+    console.log(waiting_room);
     waiting_room = waiting_room.filter(
         x => x != p
     );
+    console.log(waiting_room);
     lock = false;
 }
 

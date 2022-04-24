@@ -31,12 +31,11 @@ const someRoute = require('./routes/routes.js')
 const register = require('./routes/register.js')
 
 app.use(bodyParser.json());
-app.use*(cors())
+app.use(cors())
 app.use('/lol', someRoute);
 app.use('/registers', register);
 
 app.get(start_path+'/', (req, res) => {
-    // res.send("ide gas");
     res.sendFile(__dirname + '/views/index_express.html');
 });
 
@@ -76,11 +75,11 @@ app.get('/register', checkNotAuthenticated, (req,res) => {
 app.post('/login', checkNotAuthenticated, function(req, res, next) {
     passport.authenticate('local', function(err, user, info) {
         if (err || !user)
-            return res.send('failed');
+            return res.status(500).send({message:'Something went wrong. Try again'});
         req.logIn(user, function(err) {
             if (err)
-                return res.send('some err');
-            return res.send('success');
+                return res.status(500).send({message:'Something went wrong. Try again'});
+            return res.status(200).send({message:'Succesfully logged in'});
         });
     })(req, res, next);
 });
@@ -90,7 +89,7 @@ app.post('/register', checkNotAuthenticated, async (req,res) => {
         if(err)
             res.send('db error');
         if(user)
-            return res.send('email in use');
+            return res.status(400).send({message:'email in use'});
         try {
             const hashedPassword = await bcrypt.hash(req.body.password, 10);
             const user_db = new User({
@@ -99,19 +98,19 @@ app.post('/register', checkNotAuthenticated, async (req,res) => {
             });
             try{
                 const savedUser = await user_db.save();
-                return res.send('successfull register');
+                return res.status(200).send({message:'successfull register'});
             } catch (err) {
-                res.json({message: err});
+                res.status(500).send({message: err});
             }
         } catch {
-            res.redirect('/register')
+            res.status(500).send({message:'Something went wrong. Try again'});
         }
     })
 })
 
 app.delete('/logout', (req,res) => {
     req.logOut();
-    res.redirect('/login')
+    res.status(200);
 })
 
 function checkAuthenticated(req, res, next) {
@@ -123,7 +122,7 @@ function checkAuthenticated(req, res, next) {
 
 function checkNotAuthenticated(req, res, next) {
     if(req.isAuthenticated()) {
-        return res.redirect('/');
+        return res.status(401).send({message:'You are already logged in'});
     }
     return next()
 }
