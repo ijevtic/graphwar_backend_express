@@ -14,6 +14,8 @@ const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const cors = require('cors');
 const User = require('./models/User');
+const crypto = require('crypto');
+const UserToken = require('./models/UserToken');
 
 mongoose.connect(process.env.DB_CONNECTION, {useNewUrlParser:true,useUnifiedTopology: true });
 
@@ -63,6 +65,13 @@ app.use(passport.initialize())
 app.use(passport.session())
 app.use(methodOverride('_method'))
 
+app.get('/data', checkToken, (req,res) =>{
+    res.send({blogs:[
+        {title:"Blog1", content:"aa"},
+        {title:"Blog2", content:"bb"},
+        {title:"Blog3", content:"cc"},
+        ]});
+})
 
 app.get('/login', checkNotAuthenticated, (req,res) => {
     res.render('login.ejs')
@@ -75,11 +84,33 @@ app.get('/register', checkNotAuthenticated, (req,res) => {
 app.post('/login', checkNotAuthenticated, function(req, res, next) {
     passport.authenticate('local', function(err, user, info) {
         if (err || !user)
-            return res.status(500).send({message:'Something went wrong. Try again'});
+            return res.status(500).send({message:'Something went wrong. Try againnnnn'});
         req.logIn(user, function(err) {
             if (err)
                 return res.status(500).send({message:'Something went wrong. Try again'});
-            return res.status(200).send({message:'Succesfully logged in'});
+            
+            UserToken.findOne({username: req.body.email}, async (err, user) => {
+                if(err)
+                    res.send('db error');
+                const token = crypto.randomBytes(48).toString('hex');
+                const user_token = new UserToken({username: req.body.email,token: token });
+                if(user) {
+                    const query = { username: req.body.email };
+                    const update = { $set: { username: req.body.email, token: token }};
+                    const options = {};
+                    db.collection("usertokens").updateOne(query, update, options);
+                }
+                else {
+                    try{
+                        await user_token.save();
+                    } catch (err) {
+                        res.status(500).send({message: err});
+                    }
+                }
+                return res.status(200).send({message:'Successfully logged in', token: token});
+
+
+            })
         });
     })(req, res, next);
 });
@@ -125,6 +156,20 @@ function checkNotAuthenticated(req, res, next) {
         return res.status(401).send({message:'You are already logged in'});
     }
     return next()
+}
+
+function checkToken(req, res, next) {
+    if(!req.isAuthenticated()) {
+        return res.send({message:'You are not logged in'});
+    }
+    UserToken.findOne({token: req.body.token}, async (err, user) => {
+        if(err)
+            return res.send('db error');
+        if(!user) {
+            return res.status(401).send({message:'Bad token'});
+        }
+        return next();
+    })
 }
 
 tools.setupSocketIO(server)
