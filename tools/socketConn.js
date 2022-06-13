@@ -1,11 +1,15 @@
 const { Server } = require("socket.io");
-const {removeFromWaitingRoom, joinRoomRequest, leaveGameRequest, playTurnRequest} = require("./room_game_functions.js")
+const {removeFromWaitingRoom, joinRoomRequest, leaveGameRequest, playTurnRequest, removeDisconnectedPlayer, sendChatMessage} = require("./room_game_functions.js")
 require('dotenv').config()
 
 function setupSocketIO (server) {
 
-    const io = new Server(server, {});
-      
+    const io = new Server(server, {
+        cors: {
+          origin: '*',
+        }
+      });
+
       async function printSockets () {
         const sockets = await io.fetchSockets();
         for(const socket of sockets ) {
@@ -20,11 +24,12 @@ function setupSocketIO (server) {
 
         socket.on('disconnect', () => {
             console.log('user disconnected');
+            removeDisconnectedPlayer(io, socket.id);
+            //izbacivanje iz sobe/igre
         });
         
         socket.on('chat message', (msg) => {
-            console.log('message: ' + msg);
-            io.emit('chat message', msg);
+            sendChatMessage(io, socket.id, msg);
         });
 
         socket.on('join room', (token) => {

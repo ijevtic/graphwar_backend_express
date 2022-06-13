@@ -26,6 +26,7 @@ db.once('open', () => console.log('Connected to MongoDB'));
 const start_path = process.env.START_PATH_SOCKET;
 
 const app = express()
+app.use(cors())
 const server = http.createServer(app);
 
 
@@ -33,7 +34,6 @@ const someRoute = require('./routes/routes.js')
 const register = require('./routes/register.js')
 
 app.use(bodyParser.json());
-app.use(cors())
 app.use('/lol', someRoute);
 app.use('/registers', register);
 
