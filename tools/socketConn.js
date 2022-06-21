@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const {removeFromWaitingRoom, joinRoomRequest, leaveGameRequest, playTurnRequest, removeDisconnectedPlayer, sendChatMessage} = require("./room_game_functions.js")
+const {removeFromWaitingRoom, joinRoomRequest, leaveGameRequest, playTurnRequest, removeDisconnectedPlayer, sendChatMessage, playerReady} = require("./room_game_functions.js")
 require('dotenv').config()
 
 function setupSocketIO (server) {
@@ -46,6 +46,11 @@ function setupSocketIO (server) {
 
         socket.on('play', (token) => {
             playTurnRequest(socket.id);
+        });
+
+        socket.on('ready for game', (token) => {
+            playerReady(socket.id);
+            console.log("ready for game " + socket.id);
         });
     });
 }

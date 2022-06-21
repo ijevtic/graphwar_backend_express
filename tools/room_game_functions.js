@@ -4,6 +4,7 @@ var lock = false;
 var waiting_room = [];
 const user_game = new Map();
 const game_map = new Map();
+const player_ready = new Map();
 
 function createGame(io, p1, p2) {
     var game_id = Math.random().toString(36).slice(2, 7);
@@ -11,10 +12,29 @@ function createGame(io, p1, p2) {
     io.in(p2).socketsJoin(game_id);
     user_game.set(p1, game_id);
     user_game.set(p2, game_id);
-    var g = new Game(game_id, [p1, p2]);
-    g.start(game_map);
+    var g = new Game(game_id, [p1, p2], io);
     game_map.set(game_id, g);
-    io.to(game_id).emit('game start', "dobrodosli u game " + game_id);
+
+    setupGame(g, game_map);
+}
+
+function setupGame(game, game_map) {
+    player_ready.delete(game.players[0]);
+    player_ready.delete(game.players[1]);
+    game.io.to(game.game_id).emit('game start', "dobrodosli u game " + game.game_id);
+    setTimeout(isReady, process.env.READY_TIME, game, game_map);
+}
+
+function isReady(game, game_map) {
+    if (player_ready.get(game.players[0]) && player_ready.get(game.players[1])) {
+        game.start(game_map);
+    } else {
+        deleteGame(game.io, game.game_id);
+    }
+}
+
+function playerReady(p) {
+    player_ready.set(p, true);
 }
 
 function deleteGame(io, game_id) {
@@ -109,5 +129,6 @@ module.exports = {
     leaveGameRequest,
     playTurnRequest,
     removeDisconnectedPlayer,
-    sendChatMessage
+    sendChatMessage,
+    playerReady
 }

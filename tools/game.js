@@ -1,20 +1,26 @@
 class Game {
-    constructor(game_id, players) {
+    constructor(game_id, players, io) {
         this.game_id = game_id;
         this.players = players;
         this.turn = 0;
         this.num_turns = 0;
+        this.io = io;
     }
 
     changeTurn(game_map) {
         this.turn = 1-this.turn;
         console.log("sad je ovaj turn " + this.turn);
+        this.io.to(this.players[this.turn]).emit('turn info', 'Your turn');
+        this.io.to(this.players[(this.turn+1)%2]).emit('turn info', 'Opponent turn');
         setTimeout(timeUp, process.env.TURN_TIME, this.num_turns, this, game_map);
+        
     }
 
     start(game_map) {
         console.log("pocinjem");
         console.log(this.num_turns);
+        this.io.to(this.players[this.turn]).emit('turn info', 'Your turn');
+        this.io.to(this.players[(this.turn+1)%2]).emit('turn info', 'Opponent turn');
         setTimeout(timeUp, process.env.TURN_TIME, this.num_turns, this, game_map);
     }
 
